@@ -1,6 +1,7 @@
 ﻿using Microsoft.eShopWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate;
 using Microsoft.eShopWeb.UnitTests.Builders;
 using Xunit;
 using Xunit.Abstractions;
@@ -27,7 +28,7 @@ namespace Microsoft.eShopWeb.IntegrationTests.Repositories.OrderRepositoryTests
         public void GetsExistingOrder()
         {
             var existingOrder = OrderBuilder.WithDefaultValues();
-            _catalogContext.Orders.Add(existingOrder);
+            _catalogContext.Set<Order>().Add(existingOrder);
             _catalogContext.SaveChanges();
             int orderId = existingOrder.Id;
             _output.WriteLine($"OrderId: {orderId}");

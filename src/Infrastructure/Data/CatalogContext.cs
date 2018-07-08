@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using System;
+using System.Linq;
+using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.eShopWeb.ApplicationCore.Entities;
-using Microsoft.eShopWeb.ApplicationCore.Entities.BasketAggregate;
-using Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate;
+using Microsoft.eShopWeb.Infrastructure.Data.EntityMap;
 
 namespace Microsoft.eShopWeb.Infrastructure.Data
 {
@@ -13,99 +14,44 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
         {
         }
 
-        public DbSet<Basket> Baskets { get; set; }
-        public DbSet<CatalogItem> CatalogItems { get; set; }
-        public DbSet<CatalogBrand> CatalogBrands { get; set; }
-        public DbSet<CatalogType> CatalogTypes { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder builder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            builder.Entity<Basket>(ConfigureBasket);
-            builder.Entity<CatalogBrand>(ConfigureCatalogBrand);
-            builder.Entity<CatalogType>(ConfigureCatalogType);
-            builder.Entity<CatalogItem>(ConfigureCatalogItem);
-            builder.Entity<Order>(ConfigureOrder);
-            builder.Entity<OrderItem>(ConfigureOrderItem);
+            AddAllEntityTypes(modelBuilder);
+            MapAllEntityTypes(modelBuilder);
+            base.OnModelCreating(modelBuilder);
         }
 
-        private void ConfigureBasket(EntityTypeBuilder<Basket> builder)
+        /// <summary>
+        /// 找到所有继承自BaseEntity的实体，动态添加实体类型
+        /// </summary>
+        /// <param name="builder"></param>
+        private static void AddAllEntityTypes(ModelBuilder builder)
         {
-            var navigation = builder.Metadata.FindNavigation(nameof(Basket.Items));
-
-            navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
+            var entityTypes = typeof(BaseEntity).Assembly.GetTypes()
+                .Where(t => t.IsClass && typeof(BaseEntity).IsAssignableFrom(t) && t != typeof(BaseEntity));
+            foreach (var entityType in entityTypes)
+            {
+                if (builder.Model.FindEntityType(entityType) == null)
+                {
+                    builder.Model.AddEntityType(entityType);
+                }
+            }
         }
 
-        private void ConfigureCatalogItem(EntityTypeBuilder<CatalogItem> builder)
+        /// <summary>
+        /// 找到所有实现IEntityMap的类型，动态进行实体映射
+        /// </summary>
+        /// <param name="builder"></param>
+        private static void MapAllEntityTypes(ModelBuilder builder)
         {
-            builder.ToTable("Catalog");
+            var entityMaps = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(type => !string.IsNullOrWhiteSpace(type.Namespace)
+                               && typeof(IEntityMap).IsAssignableFrom(type) && type.IsClass).ToList();
 
-            builder.Property(ci => ci.Id)
-                .ForSqlServerUseSequenceHiLo("catalog_hilo")
-                .IsRequired();
-
-            builder.Property(ci => ci.Name)
-                .IsRequired(true)
-                .HasMaxLength(50);
-
-            builder.Property(ci => ci.Price)
-                .IsRequired(true);
-
-            builder.Property(ci => ci.PictureUri)
-                .IsRequired(false);
-
-            builder.HasOne(ci => ci.CatalogBrand)
-                .WithMany()
-                .HasForeignKey(ci => ci.CatalogBrandId);
-
-            builder.HasOne(ci => ci.CatalogType)
-                .WithMany()
-                .HasForeignKey(ci => ci.CatalogTypeId);
-        }
-
-        private void ConfigureCatalogBrand(EntityTypeBuilder<CatalogBrand> builder)
-        {
-            builder.ToTable("CatalogBrand");
-
-            builder.HasKey(ci => ci.Id);
-
-            builder.Property(ci => ci.Id)
-               .ForSqlServerUseSequenceHiLo("catalog_brand_hilo")
-               .IsRequired();
-
-            builder.Property(cb => cb.Brand)
-                .IsRequired()
-                .HasMaxLength(100);
-        }
-
-        private void ConfigureCatalogType(EntityTypeBuilder<CatalogType> builder)
-        {
-            builder.ToTable("CatalogType");
-
-            builder.HasKey(ci => ci.Id);
-
-            builder.Property(ci => ci.Id)
-               .ForSqlServerUseSequenceHiLo("catalog_type_hilo")
-               .IsRequired();
-
-            builder.Property(cb => cb.Type)
-                .IsRequired()
-                .HasMaxLength(100);
-        }
-
-        private void ConfigureOrder(EntityTypeBuilder<Order> builder)
-        {
-            var navigation = builder.Metadata.FindNavigation(nameof(Order.OrderItems));
-
-            navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
-
-            builder.OwnsOne(o => o.ShipToAddress);
-        }
-
-        private void ConfigureOrderItem(EntityTypeBuilder<OrderItem> builder)
-        {
-            builder.OwnsOne(i => i.ItemOrdered);
+            foreach (var entyMap in entityMaps)
+            {
+                Activator.CreateInstance(entyMap, builder);
+            }
         }
     }
 }

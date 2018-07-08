@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.eShopWeb.ApplicationCore.Entities;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.eShopWeb.ApplicationCore.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.eShopWeb.Infrastructure.Data
 {
@@ -19,25 +18,24 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
                 // TODO: Only run this if using a real database
                 // context.Database.Migrate();
 
-                if (!catalogContext.CatalogBrands.Any())
+                if (!catalogContext.Set<CatalogBrand>().Any())
                 {
-                    catalogContext.CatalogBrands.AddRange(
+                    catalogContext.Set<CatalogBrand>().AddRange(
                         GetPreconfiguredCatalogBrands());
 
                     await catalogContext.SaveChangesAsync();
                 }
-
-                if (!catalogContext.CatalogTypes.Any())
+                if (!catalogContext.Set<CatalogType>().Any())
                 {
-                    catalogContext.CatalogTypes.AddRange(
+                    catalogContext.Set<CatalogType>().AddRange(
                         GetPreconfiguredCatalogTypes());
 
                     await catalogContext.SaveChangesAsync();
                 }
 
-                if (!catalogContext.CatalogItems.Any())
+                if (!catalogContext.Set<CatalogItem>().Any())
                 {
-                    catalogContext.CatalogItems.AddRange(
+                    catalogContext.Set<CatalogItem>().AddRange(
                         GetPreconfiguredItems());
 
                     await catalogContext.SaveChangesAsync();
@@ -62,7 +60,7 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
                 new CatalogBrand() { Brand = "Azure"},
                 new CatalogBrand() { Brand = ".NET" },
                 new CatalogBrand() { Brand = "Visual Studio" },
-                new CatalogBrand() { Brand = "SQL Server" }, 
+                new CatalogBrand() { Brand = "SQL Server" },
                 new CatalogBrand() { Brand = "Other" }
             };
         }

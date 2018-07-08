@@ -14,7 +14,7 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
 
         public Order GetByIdWithItems(int id)
         {
-            return _dbContext.Orders
+            return _dbContext.Set<Order>()
                 .Include(o => o.OrderItems)
                 .Include($"{nameof(Order.OrderItems)}.{nameof(OrderItem.ItemOrdered)}")
                 .FirstOrDefault();
@@ -22,7 +22,7 @@ namespace Microsoft.eShopWeb.Infrastructure.Data
 
         public Task<Order> GetByIdWithItemsAsync(int id)
         {
-            return _dbContext.Orders
+            return _dbContext.Set<Order>()
                 .Include(o => o.OrderItems)
                 .Include($"{nameof(Order.OrderItems)}.{nameof(OrderItem.ItemOrdered)}")
                 .FirstOrDefaultAsync();
