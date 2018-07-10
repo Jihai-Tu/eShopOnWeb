@@ -2,7 +2,7 @@
 
 namespace Microsoft.eShopWeb.ApplicationCore.Entities.OrderAggregate
 {
-    public class Address // ValueObject
+    public class Address : ValueObject<Address>
     {
         public String Street { get; private set; }
 
