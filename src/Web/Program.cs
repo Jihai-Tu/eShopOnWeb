@@ -41,6 +41,7 @@ namespace Microsoft.eShopWeb.Web
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .UseSetting(WebHostDefaults.HostingStartupAssembliesKey, "ApplicationCore;Infrastructure;")//这里进行服务的注册，并不需要关注顺序。
                 // .UseUrls("http://0.0.0.0:5106")
                 .UseStartup<Startup>();
     }
